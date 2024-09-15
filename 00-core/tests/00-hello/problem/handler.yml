@@ -1,0 +1,3 @@
+handler: std
+source_modifier: no_main
+func_name: max4

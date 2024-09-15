@@ -1,0 +1,48 @@
+{
+  "max2": {
+    "name": "max2",
+    "long_name": "max2( int a , int b)",
+    "tokens": 23,
+    "nloc": 4,
+    "lines": 4,
+    "ccn": 2.0,
+    "parameters": [
+      "a",
+      "b"
+    ]
+  },
+  "max4": {
+    "name": "max4",
+    "long_name": "max4( int a , int b , int c , int d)",
+    "tokens": 34,
+    "nloc": 3,
+    "lines": 3,
+    "ccn": 1.0,
+    "parameters": [
+      "a",
+      "b",
+      "c",
+      "d"
+    ]
+  },
+  "*": {
+    "lines": 9,
+    "nloc": 7,
+    "tokens": 59,
+    "name": "solution.cc",
+    "ccn": 2,
+    "comments": 0,
+    "language": "SUM",
+    "halstead": {
+      "operators-count": 40.0,
+      "distinct-operators": 11.0,
+      "operands-count": 19.0,
+      "distinct-operands": 6.0,
+      "program-length": 59.0,
+      "program-vocabulary": 17.0,
+      "volume": 241.16,
+      "difficulty": 17.42,
+      "effort": 4200.21
+    }
+  }
+}
