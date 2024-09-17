@@ -1,0 +1,31 @@
+{
+  "main": {
+    "name": "main",
+    "long_name": "main()",
+    "tokens": 13,
+    "nloc": 4,
+    "lines": 4,
+    "ccn": 1.0,
+    "parameters": []
+  },
+  "*": {
+    "lines": 7,
+    "nloc": 6,
+    "tokens": 20,
+    "name": "solution.cc",
+    "ccn": 1,
+    "comments": 0,
+    "language": "SUM",
+    "halstead": {
+      "operators-count": 16.0,
+      "distinct-operators": 13.0,
+      "operands-count": 8.0,
+      "distinct-operands": 8.0,
+      "program-length": 24.0,
+      "program-vocabulary": 21.0,
+      "volume": 105.42,
+      "difficulty": 6.5,
+      "effort": 685.2
+    }
+  }
+}

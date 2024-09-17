@@ -1,11 +1,19 @@
 # Jutge tests
 
-First, fetch submodules:
+First, prepare submodules:
 ```sh
 git submodule init
+git submodule update
 ```
 
-Then run:
+Create the Jutge docker images:
+```sh
+cd src/dockerfiles
+make
+```
+
+Then:
 ```bash
+bun install
 bun test
 ```

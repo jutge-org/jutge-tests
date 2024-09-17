@@ -10,5 +10,8 @@
   },
   "prettier": {
     "semi": false
+  },
+  "dependencies": {
+    "yaml": "^2.5.1"
   }
 }

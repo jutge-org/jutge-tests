@@ -176,3 +176,4 @@ dist
 
 **/venv
 **/tests/**/*.tar
+output.txt
