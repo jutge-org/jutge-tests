@@ -1,10 +1,10 @@
-[submodule "00-core/dockerfiles"]
-	path = 00-core/src/dockerfiles
-	url = github:jutge-org/jutge-dockerfiles
-	branch = migrate-to-no-install-script
-[submodule "00-core/toolkit"]
-	path = 00-core/src/toolkit
+[submodule "src/toolkit"]
+	path = src/toolkit
 	url = github:jutge-org/jutge-toolkit
-[submodule "00-core/server-toolkit"]
-	path = 00-core/src/server-toolkit
+[submodule "src/server-toolkit"]
+	path = src/server-toolkit
 	url = github:jutge-org/jutge-server-toolkit
+[submodule "src/dockerfiles"]
+	path = src/dockerfiles
+	url = github:jutge-org/jutge-dockerfiles
+	branch = docker-in-docker
