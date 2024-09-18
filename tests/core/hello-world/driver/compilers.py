@@ -2265,7 +2265,7 @@ class Compiler_Go(Compiler):
         return util.file_exists("program.exe")
 
     def execute(self, tst):
-        self.execute_monitor(tst, "--maxmem=1024 --maxprocs=4 ./program.exe")
+        self.execute_monitor(tst, "--maxmem=1024:1024 --maxprocs=8 ./program.exe")
 
 
 class Compiler_CLISP(Compiler):
