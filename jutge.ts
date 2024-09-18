@@ -1,8 +1,9 @@
 import { $ } from "bun"
-import { expect, test } from "bun:test"
+import { expect } from "bun:test"
 import { copyFile, mkdir, readdir, rm } from "fs/promises"
-import { basename, extname } from "path"
+import { extname } from "path"
 import { parse as yamlParse, stringify as yamlStringify } from "yaml"
+import { PYTHON_ENV_DIR } from "./config"
 
 const makeTaskTar = async (taskFolder: string) => {
   for (const part of ["driver", "problem", "submission"]) {
@@ -12,38 +13,36 @@ const makeTaskTar = async (taskFolder: string) => {
   await $`rm -f driver.tgz problem.tgz submission.tgz`
 }
 
-const pythonEnvCreate = async () => {
-  await $`python3 -m venv venv`
-}
-
-const pythonEnvRun = async (cmds: string[]) => {
+export const pythonEnvRun = async (cmds: string[]) => {
   const script = new Response(["source venv/bin/activate", ...cmds].join("\n"))
-  const { stderr } = await $`cat < ${script} | bash`.quiet()
-  return stderr.toString()
+  const { stdout, stderr } = await $`cat < ${script} | bash`.quiet()
+  return {
+    stdout: stdout.toString(),
+    stderr: stderr.toString(),
+  }
 }
 
-export const prepareEnv = async () => {
-  // await $`make -C src/dockerfiles server`;
-  console.log(`Make tar...`)
-  console.log(`Create python environment`)
-  await pythonEnvCreate()
-  console.log(`Install toolkits`)
-  await pythonEnvRun([
-    "pip3 install src/toolkit",
-    "pip3 install src/server-toolkit",
-  ])
+export const pythonEnvCreate = async (packages: string[]) => {
+  await $`python3 -m venv ${PYTHON_ENV_DIR}`
+  await pythonEnvRun(packages.map((pkg) => `pip3 install ${pkg}`))
 }
 
-const rVeredict = /<<<< end with veredict (.*) >>>>/
+export const pythonEnvDestroy = async () => {
+  await $`rm -rf ${PYTHON_ENV_DIR}`
+}
+
+export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
 export const submitProblem = async (name: string, folder: string) => {
   await makeTaskTar(folder)
 
-  const output = await pythonEnvRun([
+  const { stdout, stderr } = await pythonEnvRun([
     `jutge-run jutge-submit ${name} < ${folder}/task.tar > correction.tgz`,
   ])
-  await Bun.write(`output.txt`, output)
-  const match = output.match(rVeredict)
+  // await Bun.write(`stdout.txt`, stdout)
+  // await Bun.write(`stderr.txt`, stderr)
+
+  const match = stderr.match(rVeredict)
   if (match === null) {
     throw new Error("No veredict found")
   }
@@ -95,7 +94,7 @@ export const setSubmissionDetails = async (
 }
 
 const rVerdictFilename = /^(\w+)(-.*)?\..*$/
-const verdictFromFilename = (filename: string) => {
+export const verdictFromFilename = (filename: string) => {
   const match = filename.match(rVerdictFilename)
   if (match === null) {
     throw new Error(`Could not extract veredict from filename: ${filename}`)
@@ -103,7 +102,7 @@ const verdictFromFilename = (filename: string) => {
   return match[1]
 }
 
-const testProblem = async (problemDir: string, programFile: string) => {
+export const testProblem = async (problemDir: string, programFile: string) => {
   const verdict = await submitProblem("hello", problemDir)
   const expected = await expectedVerdict(problemDir)
   expect(
@@ -111,31 +110,3 @@ const testProblem = async (problemDir: string, programFile: string) => {
     `Program "${programFile}" failed test [${verdict} != ${expected}]`
   ).toBe(expected)
 }
-
-////////////////////////////////////////////////////////////////////////////////
-
-await prepareEnv()
-
-const root = "tests/core/00-hello"
-for (const langdir of await subDirs(`${root}/all-languages`)) {
-  for (const ent of await readdir(langdir, { withFileTypes: true })) {
-    // Skip files starting with "_"
-    if (ent.name.startsWith("_")) {
-      continue
-    }
-    if (ent.isFile()) {
-      const programFile = ent.name
-      const language = basename(langdir)
-      const programPath = `${langdir}/${programFile}`
-
-      // NOTE(pauek): The name of the file is the veredict that it should have
-      const verdict = verdictFromFilename(programFile)
-      await setSubmissionDetails(root, programPath, language, verdict)
-
-      test(`Hello world in ${language} (${programFile})`, async () => {
-        await testProblem(root, `${langdir}/${programFile}`)
-      })
-    }
-  }
-}
-
