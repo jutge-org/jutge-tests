@@ -1,66 +1,76 @@
 import archiver from "archiver"
-import { $ } from "bun"
-import { copyFile, mkdir, mkdtemp, readdir, rm } from "fs/promises"
+import {
+  copyFileSync,
+  createWriteStream,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "fs"
+import { execSync, spawnSync } from "node:child_process"
 import { extname } from "path"
 import { parse as yamlParse, stringify as yamlStringify } from "yaml"
 import { PYTHON_ENV_DIR } from "./config"
-import { createWriteStream } from "fs"
+import { dirname, basename, join } from "path"
 
-const makeTaskTar = async (taskFolder: string) => {
+export const makeTaskTar = async (taskFolder: string) => {
   for (const part of ["driver", "problem", "submission"]) {
-    await $`tar -czf ${part}.tgz -C ${`${taskFolder}/${part}`} .`
+    execSync(`tar -czf ${part}.tgz -C ${`${taskFolder}/${part}`} .`)
   }
-  await $`tar -cf ${`${taskFolder}/task.tar`} driver.tgz problem.tgz submission.tgz`
-  await $`rm -f driver.tgz problem.tgz submission.tgz`
+  execSync(
+    `tar -cf ${`${taskFolder}/task.tar`} driver.tgz problem.tgz submission.tgz`
+  )
+  execSync(`rm -f driver.tgz problem.tgz submission.tgz`)
 }
 
-export const pythonEnvRun = async (cmds: string[]) => {
-  const script = new Response(["source venv/bin/activate", ...cmds].join("\n"))
-  const { stdout, stderr } = await $`cat < ${script} | bash`.quiet()
-  return {
-    stdout: stdout.toString(),
-    stderr: stderr.toString(),
-  }
+export const pythonEnvRun = (cmds: string[]) => {
+  const script = ["source venv/bin/activate", ...cmds].join("; ")
+  const { stdout, stderr } = spawnSync("bash", ["-c", `${script}`])
+  return { stdout: stdout.toString(), stderr: stderr.toString() }
 }
 
-export const pythonEnvCreate = async (packages: string[]) => {
-  await $`python3 -m venv ${PYTHON_ENV_DIR}`
-  await pythonEnvRun(packages.map((pkg) => `pip3 install ${pkg}`))
+export const pythonEnvCreate = (packages: string[]) => {
+  execSync(`python3 -m venv ${PYTHON_ENV_DIR}`)
+  pythonEnvRun(packages.map((pkg) => `pip3 install ${pkg}`))
 }
 
-export const pythonEnvDestroy = async () => {
-  await $`rm -rf ${PYTHON_ENV_DIR}`
+export const pythonEnvDestroy = () => {
+  rmSync(PYTHON_ENV_DIR, { recursive: true, force: true })
 }
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
-export const submitProblem = async (name: string, folder: string) => {
-  const { stdout, stderr } = await pythonEnvRun([
-    `jutge-run jutge-submit ${name} < ${folder}/task.tar > correction.tgz`,
+export const submitProblem = (name: string, folder: string) => {
+  const { stdout, stderr } = pythonEnvRun([
+    `jutge-run jutge-submit ${name} < ${folder}/task.tar > ${folder}/correction.tgz`,
   ])
-  // await Bun.write(`stdout.txt`, stdout)
-  // await Bun.write(`stderr.txt`, stderr)
+
+  writeFileSync(`${folder}/stdout.txt`, stdout)
+  writeFileSync(`${folder}/stderr.txt`, stderr)
 
   const match = stderr.match(rVeredict)
-  if (match === null) {
+  if (!match) {
     throw new Error("No veredict found")
   }
   return match[1]
 }
 
 export const expectedVerdict = async (folder: string) =>
-  (await Bun.file(`${folder}/.verdict`).text()).trim()
+  readFileSync(`${folder}/.verdict`).toString().trim()
 
-export const readYml = async (path: string) => {
+export const readYml = (path: string) => {
   try {
-    return yamlParse(await Bun.file(path).text())
+    const buf = readFileSync(path)
+    return yamlParse(buf.toString())
   } catch (e) {
     return ""
   }
 }
 
 export const writeYml = async (path: string, obj: Record<string, any>) =>
-  await Bun.write(path, yamlStringify(obj))
+  writeFileSync(path, yamlStringify(obj))
 
 export const editYml = async (
   path: string,
@@ -71,7 +81,7 @@ export const editYml = async (
 }
 
 export const subDirs = async (path: string) =>
-  (await readdir(path, { withFileTypes: true }))
+  readdirSync(path, { withFileTypes: true })
     .filter((dirent) => dirent.isDirectory())
     .map((dirent) => `${path}/${dirent.name}`)
 
@@ -81,15 +91,15 @@ export const setSubmissionDetails = async (
   language: string,
   verdict: string
 ) => {
-  await rm(`${taskFolder}/submission`, { recursive: true, force: true })
-  await mkdir(`${taskFolder}/submission`)
+  rmSync(`${taskFolder}/submission`, { recursive: true, force: true })
+  mkdirSync(`${taskFolder}/submission`)
   const extension = extname(programFile)
-  await copyFile(programFile, `${taskFolder}/submission/program${extension}`)
-  await editYml(`${taskFolder}/submission/submission.yml`, (config) => ({
+  copyFileSync(programFile, `${taskFolder}/submission/program${extension}`)
+  editYml(`${taskFolder}/submission/submission.yml`, (config) => ({
     ...config,
     compiler_id: language,
   }))
-  await Bun.write(`${taskFolder}/.verdict`, verdict)
+  writeFileSync(`${taskFolder}/.verdict`, verdict)
 }
 
 const regexVerdictFilename = /^(\w+)(-.*)?\..*$/
@@ -106,36 +116,31 @@ export const verdictFromFilename = (filename: string) => {
  * Creates a tar.gz file from a directory (BASE/"mydir" => BASE/"mydir.tar.gz")
  * @param dir
  */
-export const createTarGzFromDirectory = async (dir: string) => {
-  await $`tar -czf ${`${dir}.tgz`} -C ${dir} .`
+export const createTarGzFromDirectory = (dir: string) => {
+  execSync(`tar -czf ${`${dir}.tgz`} -C ${dir} .`)
 }
 
-export const removeFile = async (path: string) => {
-  await $`rm -f ${path}`
+export const removeFile = (path: string) => {
+  rmSync(path, { recursive: true, force: true })
 }
 
-export const createTemporaryDir = async (prefix: string) => {
-  const tmpdir = await mkdtemp(prefix)
-  return tmpdir
-}
+export const createTemporaryDir = (prefix: string) => mkdtempSync(prefix)
 
 type FileContents = string
 export type TarFiles = {
   [filename: string]: FileContents
 }
-export const createTarGz = async (path: string, files: TarFiles) => {
-  const archive = archiver("tar", {
-    gzip: true,
-    gzipOptions: { level: 1 },
-  })
-  const output = createWriteStream(path)
-  archive.pipe(output)
+export const createTarGz = (path: string, files: TarFiles) => {
+  const dir = dirname(path)
+  mkdirSync(join(dir, "submission"), { recursive: true })
   for (const [filename, contents] of Object.entries(files)) {
-    archive.append(contents, { name: filename })
+    writeFileSync(join(dir, "submission", filename), contents)
   }
-  archive.finalize()
+  execSync(`tar -czf ${path} -C ${join(dir, "submission")} ${Object.keys(files).join(" ")}`)
 }
 
-export const createTar = async (destination: string, rootDir: string, localFiles: string[]) => {
-  await $`tar -cf ${destination} -C ${rootDir} ${localFiles}`
-}
+export const createTar = (
+  destination: string,
+  rootDir: string,
+  localFiles: string[]
+) => execSync(`tar -cf ${destination} -C ${rootDir} ${localFiles}`)

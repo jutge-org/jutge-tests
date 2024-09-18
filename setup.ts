@@ -3,7 +3,7 @@ import { createTarGzFromDirectory, pythonEnvCreate, removeFile } from "./jutge"
 
 // For the hello world tests
 
-const helloRoot = "tests/core/hello"
+const helloRoot = "tests/core/hello-world"
 beforeAll(async () => {
   await pythonEnvCreate(["src/toolkit", "src/server-toolkit"])
   createTarGzFromDirectory(`${helloRoot}/driver`)

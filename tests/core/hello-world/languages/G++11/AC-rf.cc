@@ -3,5 +3,6 @@
 using namespace std;
 
 int main() {
-    cout <<getpid()<<endl;
+    (void) getpid();
+    cout << "Hello world!" << endl;
 }
