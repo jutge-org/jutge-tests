@@ -2,6 +2,9 @@
   "name": "jutge-tests-core",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "test": "bun test"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -12,6 +15,9 @@
     "semi": false
   },
   "dependencies": {
+    "@types/archiver": "^6.0.2",
+    "archiver": "^7.0.1",
+    "memfs": "^4.11.2",
     "yaml": "^2.5.1"
   }
 }

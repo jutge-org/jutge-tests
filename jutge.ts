@@ -1,9 +1,10 @@
+import archiver from "archiver"
 import { $ } from "bun"
-import { expect } from "bun:test"
-import { copyFile, mkdir, readdir, rm } from "fs/promises"
+import { copyFile, mkdir, mkdtemp, readdir, rm } from "fs/promises"
 import { extname } from "path"
 import { parse as yamlParse, stringify as yamlStringify } from "yaml"
 import { PYTHON_ENV_DIR } from "./config"
+import { createWriteStream } from "fs"
 
 const makeTaskTar = async (taskFolder: string) => {
   for (const part of ["driver", "problem", "submission"]) {
@@ -34,8 +35,6 @@ export const pythonEnvDestroy = async () => {
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
 export const submitProblem = async (name: string, folder: string) => {
-  await makeTaskTar(folder)
-
   const { stdout, stderr } = await pythonEnvRun([
     `jutge-run jutge-submit ${name} < ${folder}/task.tar > correction.tgz`,
   ])
@@ -93,20 +92,50 @@ export const setSubmissionDetails = async (
   await Bun.write(`${taskFolder}/.verdict`, verdict)
 }
 
-const rVerdictFilename = /^(\w+)(-.*)?\..*$/
+const regexVerdictFilename = /^(\w+)(-.*)?\..*$/
+
 export const verdictFromFilename = (filename: string) => {
-  const match = filename.match(rVerdictFilename)
+  const match = filename.match(regexVerdictFilename)
   if (match === null) {
     throw new Error(`Could not extract veredict from filename: ${filename}`)
   }
   return match[1]
 }
 
-export const testProblem = async (problemDir: string, programFile: string) => {
-  const verdict = await submitProblem("hello", problemDir)
-  const expected = await expectedVerdict(problemDir)
-  expect(
-    verdict,
-    `Program "${programFile}" failed test [${verdict} != ${expected}]`
-  ).toBe(expected)
+/**
+ * Creates a tar.gz file from a directory (BASE/"mydir" => BASE/"mydir.tar.gz")
+ * @param dir
+ */
+export const createTarGzFromDirectory = async (dir: string) => {
+  await $`tar -czf ${`${dir}.tgz`} -C ${dir} .`
+}
+
+export const removeFile = async (path: string) => {
+  await $`rm -f ${path}`
+}
+
+export const createTemporaryDir = async (prefix: string) => {
+  const tmpdir = await mkdtemp(prefix)
+  return tmpdir
+}
+
+type FileContents = string
+export type TarFiles = {
+  [filename: string]: FileContents
+}
+export const createTarGz = async (path: string, files: TarFiles) => {
+  const archive = archiver("tar", {
+    gzip: true,
+    gzipOptions: { level: 1 },
+  })
+  const output = createWriteStream(path)
+  archive.pipe(output)
+  for (const [filename, contents] of Object.entries(files)) {
+    archive.append(contents, { name: filename })
+  }
+  archive.finalize()
+}
+
+export const createTar = async (destination: string, rootDir: string, localFiles: string[]) => {
+  await $`tar -cf ${destination} -C ${rootDir} ${localFiles}`
 }

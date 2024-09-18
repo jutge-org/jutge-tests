@@ -17,3 +17,7 @@ Then:
 bun install
 bun test
 ```
+
+# Dependencies
+
+`docker`, `tar`                                                         
