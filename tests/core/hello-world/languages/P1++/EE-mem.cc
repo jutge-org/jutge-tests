@@ -1,11 +1,11 @@
 #include <iostream>
+#include <cstdint>
 using namespace std;
 
 int main() {
-    char* b;
     for (int i = 0; ; ++i) {
-        char* a = new char[1024*1024];
+        uint8_t* a = new uint8_t[1024*1024];
         cout << i << endl;
-        b = a;
+        (void)a;
     }
 }

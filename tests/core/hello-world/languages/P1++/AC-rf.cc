@@ -5,6 +5,6 @@ using namespace std;
 // We allow system calls like getpid.
 
 int main() {
-    (void) getpid();
+    (void)getpid();
     cout << "Hello world!" << endl;
 }
