@@ -9,5 +9,5 @@
 	url = github:jutge-org/jutge-dockerfiles
 	branch = docker-in-docker
 [submodule "tests/core/hello-world/driver"]
-	path = tests/core/hello-world/driver
+	path = tests/core/hello-world/driver-src
 	url = github:jutge-org/jutge-driver-std
