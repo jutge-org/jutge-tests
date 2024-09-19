@@ -15,7 +15,7 @@ make
 Then:
 ```bash
 bun install
-bun test
+bun run test
 ```
 
 # Dependencies
