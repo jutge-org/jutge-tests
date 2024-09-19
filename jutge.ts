@@ -1,7 +1,5 @@
-import archiver from "archiver"
 import {
   copyFileSync,
-  createWriteStream,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -10,10 +8,9 @@ import {
   writeFileSync,
 } from "fs"
 import { execSync, spawnSync } from "node:child_process"
-import { extname } from "path"
+import { dirname, extname, join } from "path"
 import { parse as yamlParse, stringify as yamlStringify } from "yaml"
 import { PYTHON_ENV_DIR } from "./config"
-import { dirname, basename, join } from "path"
 
 export const makeTaskTar = async (taskFolder: string) => {
   for (const part of ["driver", "problem", "submission"]) {
@@ -42,8 +39,11 @@ export const pythonEnvDestroy = () => {
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
-export const submitProblem = (name: string, testDir: string, tmpDir:string) => {
-
+export const submitProblem = (
+  name: string,
+  testDir: string,
+  tmpDir: string
+) => {
   const { stdout, stderr } = pythonEnvRun([
     `cd ${tmpDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
     `jutge-run jutge-submit ${name} < ${tmpDir}/task.tar > ${testDir}/correction.tgz`,
@@ -138,7 +138,11 @@ export const createTarGz = (path: string, files: TarFiles) => {
   for (const [filename, contents] of Object.entries(files)) {
     writeFileSync(join(dir, "submission", filename), contents)
   }
-  execSync(`tar -czf ${path} -C ${join(dir, "submission")} ${Object.keys(files).join(" ")}`)
+  execSync(
+    `tar -czf ${path} -C ${join(dir, "submission")} ${Object.keys(files).join(
+      " "
+    )}`
+  )
 }
 
 export const createTar = (
