@@ -1,7 +1,15 @@
 import { createTarGz, submitProblem, verdictFromFilename } from "@/jutge"
 import { execSync } from "child_process"
-import { copyFileSync, mkdirSync, readdirSync, rmSync, readFileSync } from "fs"
-import { basename, dirname, extname } from "path"
+import {
+  copyFileSync,
+  mkdirSync,
+  readdirSync,
+  rmSync,
+  readFileSync,
+  mkdtempSync,
+  rmdirSync,
+} from "fs"
+import { basename, dirname, extname, resolve, join } from "path"
 
 export const helloWorldTestForLanguage = (langdir: string) => () => {
   const outputDir = ".errors/hello"
@@ -28,24 +36,25 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
   }
 
   const createHelloWorldTar = (
-    tmpdir: string,
+    testDir: string,
+    tmpDir: string,
     language: string,
     programFile: string
   ) => {
     // Create submission.tgz
     const extension = extname(programFile) // This _contains_ the dot '.'
-    createTarGz(`${tmpdir}/submission.tgz`, {
+    createTarGz(`${testDir}/submission.tgz`, {
       [`program${extension}`]: readFileSync(programFile).toString(),
       [`submission.yml`]: `compiler_id: ${language}\n`,
     })
 
     // Copy driver.tgz and problem.tgz
-    copyFileSync(`${testRoot}/driver.tgz`, `${tmpdir}/driver.tgz`)
-    copyFileSync(`${testRoot}/problem.tgz`, `${tmpdir}/problem.tgz`)
+    copyFileSync(`${testRoot}/driver.tgz`, `${testDir}/driver.tgz`)
+    copyFileSync(`${testRoot}/problem.tgz`, `${testDir}/problem.tgz`)
 
     // Create task.tar with driver.tgz, problem.tgz and submission.tgz
     execSync(
-      `tar -cf ${tmpdir}/task.tar -C ${tmpdir} driver.tgz problem.tgz submission.tgz`
+      `tar -cf ${tmpDir}/task.tar -C ${testDir} driver.tgz problem.tgz submission.tgz`
     )
   }
 
@@ -53,16 +62,34 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
   test.concurrent.each(cases)(
     "%s",
     (programFile, programPath, expectedVerdict) => {
-      const tmpdir = `${outputDir}/${language}/${programFile}`
-      mkdirSync(tmpdir, { recursive: true })
-      createHelloWorldTar(tmpdir, language, programPath)
-      const verdict = submitProblem("hello_world", tmpdir)
+      const tmpDir = mkdtempSync("/tmp/jutge-")
+      const testDir = resolve(join(outputDir, language, programFile))
+
+      mkdirSync(testDir, { recursive: true })
+      createHelloWorldTar(testDir, tmpDir, language, programPath)
+
+      // NOTE(pauek):
+      // The name "hello_world" we pass here becomes the name of a folder that 'jutge-submit'
+      // creates. In the queue, the task folder is shared, and therefore this name is crucial.
+      // Here in the tests, 'submitProblem' creates a temporary directory to launch 'jutge-run',
+      // so the name is not so important.
+      const verdict = submitProblem("hello_world", testDir, tmpDir)
+
       expect(verdict).toBe(expectedVerdict)
 
       // NOTE(pauek):
       // This is reached only if the test passes, since a failed expect throws
       // So we keep directories for failed tests ;)
-      rmSync(tmpdir, { recursive: true, force: true })
+      rmSync(testDir, { recursive: true, force: true })
     }
   )
+
+  // Try to remove the language directory, which will succeed if it is empty
+  afterAll(() => {
+    try {
+      rmdirSync(join(outputDir, language))
+    } catch (e) {
+      // Ignore error if the directory is not empty
+    }
+  })
 }

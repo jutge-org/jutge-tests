@@ -42,13 +42,15 @@ export const pythonEnvDestroy = () => {
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
-export const submitProblem = (name: string, folder: string) => {
+export const submitProblem = (name: string, testDir: string, tmpDir:string) => {
+
   const { stdout, stderr } = pythonEnvRun([
-    `jutge-run jutge-submit ${name} < ${folder}/task.tar > ${folder}/correction.tgz`,
+    `cd ${tmpDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
+    `jutge-run jutge-submit ${name} < ${tmpDir}/task.tar > ${testDir}/correction.tgz`,
   ])
 
-  writeFileSync(`${folder}/stdout.txt`, stdout)
-  writeFileSync(`${folder}/stderr.txt`, stderr)
+  writeFileSync(`${testDir}/stdout.txt`, stdout)
+  writeFileSync(`${testDir}/stderr.txt`, stderr)
 
   const match = stderr.match(rVeredict)
   if (!match) {
