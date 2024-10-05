@@ -1,15 +1,8 @@
 import { createTarGz, submitProblem, verdictFromFilename } from "@/jutge"
+import { expect, test } from "@jest/globals"
 import { execSync } from "child_process"
-import {
-  copyFileSync,
-  mkdirSync,
-  readdirSync,
-  rmSync,
-  readFileSync,
-  mkdtempSync,
-  rmdirSync,
-} from "fs"
-import { basename, dirname, extname, resolve, join } from "path"
+import * as fs from "fs"
+import { basename, dirname, extname, join, resolve } from "path"
 
 export const helloWorldTestForLanguage = (langdir: string) => () => {
   const outputDir = ".errors/hello"
@@ -19,7 +12,7 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
   const getAllTestCases = () => {
     const result: string[][] = []
 
-    for (const ent of readdirSync(langdir, { withFileTypes: true })) {
+    for (const ent of fs.readdirSync(langdir, { withFileTypes: true })) {
       // Skip files starting with "_"
       if (ent.name.startsWith("_") || ent.name.endsWith(".test.ts")) {
         continue
@@ -44,13 +37,13 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
     // Create submission.tgz
     const extension = extname(programFile) // This _contains_ the dot '.'
     createTarGz(`${testDir}/submission.tgz`, {
-      [`program${extension}`]: readFileSync(programFile).toString(),
+      [`program${extension}`]: fs.readFileSync(programFile).toString(),
       [`submission.yml`]: `compiler_id: ${language}\n`,
     })
 
     // Copy driver.tgz and problem.tgz
-    copyFileSync(`${testRoot}/driver.tgz`, `${testDir}/driver.tgz`)
-    copyFileSync(`${testRoot}/problem.tgz`, `${testDir}/problem.tgz`)
+    fs.copyFileSync(`${testRoot}/driver.tgz`, `${testDir}/driver.tgz`)
+    fs.copyFileSync(`${testRoot}/problem.tgz`, `${testDir}/problem.tgz`)
 
     // Create task.tar with driver.tgz, problem.tgz and submission.tgz
     execSync(
@@ -61,11 +54,11 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
   const cases = getAllTestCases()
   test.concurrent.each(cases)(
     "%s",
-    (programFile, programPath, expectedVerdict) => {
-      const tmpDir = mkdtempSync("/tmp/jutge-")
+    async (programFile, programPath, expectedVerdict) => {
+      const tmpDir = fs.mkdtempSync("/tmp/jutge-")
       const testDir = resolve(join(outputDir, language, programFile))
 
-      mkdirSync(testDir, { recursive: true })
+      fs.mkdirSync(testDir, { recursive: true })
       createHelloWorldTar(testDir, tmpDir, language, programPath)
 
       // NOTE(pauek):
@@ -80,14 +73,14 @@ export const helloWorldTestForLanguage = (langdir: string) => () => {
       // NOTE(pauek):
       // This is reached only if the test passes, since a failed expect throws
       // So we keep directories for failed tests ;)
-      rmSync(testDir, { recursive: true, force: true })
+      fs.rmSync(testDir, { recursive: true, force: true })
     }
   )
 
   // Try to remove the language directory, which will succeed if it is empty
   afterAll(() => {
     try {
-      rmdirSync(join(outputDir, language))
+      fs.rmdirSync(join(outputDir, language))
     } catch (e) {
       // Ignore error if the directory is not empty
     }
