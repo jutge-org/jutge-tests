@@ -1,11 +1,5 @@
-[submodule "src/toolkit"]
-	path = src/toolkit
-	url = github:jutge-org/jutge-toolkit
-[submodule "src/server-toolkit"]
-	path = src/server-toolkit
-	url = github:jutge-org/jutge-server-toolkit
 [submodule "src/dockerfiles"]
-	path = src/dockerfiles
+	path = dockerfiles
 	url = github:jutge-org/jutge-dockerfiles
 	branch = docker-in-docker
 [submodule "tests/core/hello-world/driver"]
