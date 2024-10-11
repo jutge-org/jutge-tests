@@ -20,9 +20,12 @@ Once the build is finished, check that `docker image list` returns something sim
 
 ```
 REPOSITORY              TAG       IMAGE ID       CREATED         SIZE
-jutge-org/server        latest    99a17e5e2128   7 minutes ago   7.38GB
-jutge-org/server-base   latest    3eaad3d2f086   7 minutes ago   7.38GB
-jutge-org/base          latest    bc89f18243e1   9 minutes ago   1.32GB
+jutge-org/full          latest    ed5cf1c3bd05   2 minutes ago   8.24GB
+jutge-org/server        latest    374bddb38608   3 minutes ago   7.38GB
+jutge-org/server-base   latest    3ff87846aa85   4 minutes ago   7.38GB
+jutge-org/lite          latest    f5442d799b7a   5 minutes ago   2.62GB
+jutge-org/test          latest    a1a73d2b9293   6 minutes ago   1.32GB
+jutge-org/base          latest    dc09f9f1433e   6 minutes ago   1.32GB
 ```
 
 To launch the tests (you should have [Bun](https://bun.sh) installed):
