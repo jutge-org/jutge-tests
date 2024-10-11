@@ -12,7 +12,7 @@ import { dirname, extname, join } from "path"
 import { parse as yamlParse, stringify as yamlStringify } from "yaml"
 import { PYTHON_ENV_DIR } from "./config"
 
-export const makeTaskTar = async (taskFolder: string) => {
+export const makeTaskTar = (taskFolder: string) => {
   for (const part of ["driver", "problem", "submission"]) {
     execSync(`tar -czf ${part}.tgz -C ${`${taskFolder}/${part}`} .`)
   }
@@ -39,18 +39,12 @@ export const pythonEnvDestroy = () => {
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
-export const submitProblem = (
-  name: string,
-  testDir: string,
-  tmpDir: string
-) => {
+export const submitProblem = (name: string, dir: string) => {
   const { stdout, stderr } = pythonEnvRun([
-    `cd ${tmpDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
-    `jutge-run jutge-submit ${name} < ${tmpDir}/task.tar > ${testDir}/correction.tgz`,
+    `jutge-run jutge-submit ${name} < ${dir}/task.tar > ${dir}/correction.tgz`,
   ])
-
-  writeFileSync(`${testDir}/stdout.txt`, stdout)
-  writeFileSync(`${testDir}/stderr.txt`, stderr)
+  writeFileSync(`${dir}/stdout.txt`, stdout)
+  writeFileSync(`${dir}/stderr.txt`, stderr)
 
   const match = stderr.match(rVeredict)
   if (!match) {
@@ -59,7 +53,7 @@ export const submitProblem = (
   return match[1]
 }
 
-export const expectedVerdict = async (folder: string) =>
+export const expectedVerdict = (folder: string) =>
   readFileSync(`${folder}/.verdict`).toString().trim()
 
 export const readYml = (path: string) => {
@@ -71,23 +65,23 @@ export const readYml = (path: string) => {
   }
 }
 
-export const writeYml = async (path: string, obj: Record<string, any>) =>
+export const writeYml = (path: string, obj: Record<string, any>) =>
   writeFileSync(path, yamlStringify(obj))
 
-export const editYml = async (
+export const editYml = (
   path: string,
   fn: (obj: Record<string, any>) => Record<string, any>
 ) => {
-  const obj = await readYml(path)
-  await writeYml(path, fn(obj))
+  const obj = readYml(path)
+  writeYml(path, fn(obj))
 }
 
-export const subDirs = async (path: string) =>
+export const subDirs = (path: string) =>
   readdirSync(path, { withFileTypes: true })
     .filter((dirent) => dirent.isDirectory())
     .map((dirent) => `${path}/${dirent.name}`)
 
-export const setSubmissionDetails = async (
+export const setSubmissionDetails = (
   taskFolder: string,
   programFile: string,
   language: string,
@@ -122,7 +116,7 @@ export const createTarGzFromDirectory = (dir: string) => {
   execSync(`tar -czf ${`${dir}.tgz`} -C ${dir} .`)
 }
 
-export const removeFile = (path: string) => {
+export const removePath = (path: string) => {
   rmSync(path, { recursive: true, force: true })
 }
 
@@ -138,11 +132,8 @@ export const createTarGz = (path: string, files: TarFiles) => {
   for (const [filename, contents] of Object.entries(files)) {
     writeFileSync(join(dir, "submission", filename), contents)
   }
-  execSync(
-    `tar -czf ${path} -C ${join(dir, "submission")} ${Object.keys(files).join(
-      " "
-    )}`
-  )
+  const filenames = Object.keys(files).join(" ")
+  execSync(`tar -czf ${path} -C ${join(dir, "submission")} ${filenames}`)
 }
 
 export const createTar = (
