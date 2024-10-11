@@ -40,17 +40,19 @@ export const pythonEnvDestroy = () => {
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
 export const submitProblem = (name: string, dir: string) => {
-  const { stdout, stderr } = pythonEnvRun([
+  pythonEnvRun([
     `jutge-run jutge-submit ${name} < ${dir}/task.tar > ${dir}/correction.tgz`,
   ])
-  writeFileSync(`${dir}/stdout.txt`, stdout)
-  writeFileSync(`${dir}/stderr.txt`, stderr)
 
-  const match = stderr.match(rVeredict)
-  if (!match) {
-    throw new Error("No veredict found")
+  // Decompress correction
+  extractTarGz(`${dir}/correction.tgz`, `${dir}/correction`)
+
+  try {
+    const correctionInfo: Record<string, any> = readYml(`${dir}/correction/correction.yml`)
+    return correctionInfo.veredict // NOTE(pauek): change "ver[e]dict" to "verdict" everywhere
+  } catch (e) {
+    throw new Error(`Could not read correction file: ${e}`)
   }
-  return match[1]
 }
 
 export const expectedVerdict = (folder: string) =>
@@ -114,6 +116,11 @@ export const verdictFromFilename = (filename: string) => {
  */
 export const createTarGzFromDirectory = (dir: string) => {
   execSync(`tar -czf ${`${dir}.tgz`} -C ${dir} .`)
+}
+
+export const extractTarGz = (path: string, destination: string) => {
+  mkdirSync(destination, { recursive: true })
+  execSync(`tar -xzf ${path} -C ${destination}`)
 }
 
 export const removePath = (path: string) => {
