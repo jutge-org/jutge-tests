@@ -37,8 +37,6 @@ export const pythonEnvDestroy = () => {
   rmSync(PYTHON_ENV_DIR, { recursive: true, force: true })
 }
 
-export const rVeredict = /<<<< end with veredict (.*) >>>>/
-
 export const submitProblem = (name: string, dir: string) => {
   pythonEnvRun([
     `jutge-run jutge-submit ${name} < ${dir}/task.tar > ${dir}/correction.tgz`,
