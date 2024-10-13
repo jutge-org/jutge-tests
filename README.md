@@ -28,7 +28,7 @@ jutge-org/test          latest    a1a73d2b9293   6 minutes ago   1.32GB
 jutge-org/base          latest    dc09f9f1433e   6 minutes ago   1.32GB
 ```
 
-To launch the tests (you should have [Bun](https://bun.sh) installed):
+To launch the tests (you should have [Bun](https://bun.sh) installed, and also [NodeJS](https://nodejs.org), since it seems Jest still depends on behavior from Node to run properly):
 
 ```sh
 bun install
