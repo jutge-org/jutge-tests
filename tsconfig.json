@@ -30,5 +30,5 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["src/**/*", "tests/**/*.test.ts"]
+  "include": ["src/**/*", "tests/**/*.test.ts", "tests/core/hello-world/languages/Typescript/.disabled-test.ts"]
 }

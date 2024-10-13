@@ -44,7 +44,7 @@ const createHelloWorldTar = (
 
   // Create task.tar with driver.tgz, problem.tgz and submission.tgz
   execSync(
-    `tar -cf ${workDir}/task.tar -C ${workDir} driver.tgz problem.tgz submission.tgz`
+    `tar -cf "${workDir}/task.tar" -C "${workDir}" driver.tgz problem.tgz submission.tgz`
   )
 }
 

@@ -21,7 +21,7 @@ export const pythonEnvDestroy = () => {
 
 export const submitProblem = (name: string, dir: string) => {
   pythonEnvRun([
-    `jutge-run jutge-submit ${name} < ${dir}/task.tar > ${dir}/correction.tgz`,
+    `jutge-run jutge-submit ${name} < "${dir}/task.tar" > "${dir}/correction.tgz"`,
   ])
 
   // Decompress correction
@@ -97,12 +97,12 @@ export const verdictFromFilename = (filename: string) => {
  * @param dir
  */
 export const createTarGzFromDirectory = (name: string, dir: string) => {
-  execSync(`tar -czf ${`${name}.tgz`} -C ${dir} .`)
+  execSync(`tar -czf "${`${name}.tgz`}" -C "${dir}" .`)
 }
 
 export const extractTarGz = (path: string, destination: string) => {
   fs.mkdirSync(destination, { recursive: true })
-  execSync(`tar -xzf ${path} -C ${destination}`)
+  execSync(`tar -xzf "${path}" -C "${destination}"`)
 }
 
 export const removePath = (path: string) => {
@@ -122,11 +122,11 @@ export const createTarGz = (path: string, files: TarFiles) => {
     fs.writeFileSync(join(dir, "submission", filename), contents)
   }
   const filenames = Object.keys(files).join(" ")
-  execSync(`tar -czf ${path} -C ${join(dir, "submission")} ${filenames}`)
+  execSync(`tar -czf "${path}" -C "${join(dir, "submission")}" ${filenames}`)
 }
 
 export const createTar = (
   destination: string,
   rootDir: string,
   localFiles: string[]
-) => execSync(`tar -cf ${destination} -C ${rootDir} ${localFiles}`)
+) => execSync(`tar -cf "${destination}" -C "${rootDir}" ${localFiles}`)
