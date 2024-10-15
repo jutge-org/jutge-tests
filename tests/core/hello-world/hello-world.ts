@@ -12,41 +12,28 @@ import { parse as yamlParse, stringify as yamlStringify } from "yaml"
 export const PYTHON_ENV_DIR = "venv"
 export const TEST_ROOT = __dirname
 
+export const rimraf = async (path: string) => {
+	try {
+		await fs.rm(path, { recursive: true, force: true })
+	} catch (e) {
+		// Ignore errors
+	}
+}
+
 export const asyncExec = (cmd: string) =>
-	new Promise((resolve, reject) => {
-		exec(cmd, (error, stdout, stderr) => {
-			if (error) return reject(error)
-			if (stderr) return reject(stderr)
-			resolve(stdout)
+	new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+		exec(cmd, (error, stdout: string, stderr: string) => {
+			if (error) return reject(`${error.message}\nSTDERR:${stderr}`)
+			return resolve({ stdout, stderr })
 		})
 	})
 
-export const asyncSpawn = (
-	cmd: string,
-	args: string[]
-): Promise<{ stdout: string; stderr: string }> =>
-	new Promise((resolve, reject) => {
-		const process = spawn(cmd, args)
-		let stdout = ""
-		let stderr = ""
-
-		process.stdout.on("data", (data) => (stdout += data))
-		process.stderr.on("data", (data) => (stderr += data))
-		process.on("error", (err) => reject(err))
-		process.on("close", (code) => {
-			if (code === 0) {
-				resolve({ stdout, stderr })
-			} else {
-				reject(
-					new Error(
-						`Executing '${cmd}' failed with code ${code}:\n` +
-							`STDOUT:\n${stdout}\n` +
-							`STDERR:\n${stderr}\n`
-					)
-				)
-			}
-		})
-	})
+class SpawnError extends Error {
+	constructor(msg: string, public stdout: string, public stderr: string) {
+		super(msg)
+		this.name = "SpawnError"
+	}
+}
 
 export const makeTaskTar = async (taskFolder: string) => {
 	for (const part of ["driver", "problem", "submission"]) {
@@ -59,29 +46,50 @@ export const makeTaskTar = async (taskFolder: string) => {
 }
 
 export const runScript = async (cmds: string[]) => {
-	const script = [...cmds].join("; ")
-	const { stdout, stderr } = await asyncSpawn("bash", ["-c", script])
-	return { stdout: stdout.toString(), stderr: stderr.toString() }
+	try {
+		const script = [...cmds].join(";\n")
+		const { stdout, stderr } = await asyncExec(`bash -c "${script}"`)
+		return { stdout, stderr }
+	} catch (e) {
+		if (e instanceof SpawnError) {
+			throw new Error(
+				`runScript failed: ${e.message}\nSTDOUT:${e.stdout}\nSTDERR:${e.stderr}`
+			)
+		}
+		throw new Error(`runScript failed: ${e}`)
+	}
 }
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
 export const submitProblem = async (name: string, testDir: string) => {
 	try {
+		const jutgeRunPath = resolve(
+			join(__dirname, "..", "..", "..", "jutge-run-outside", "jutge-run")
+		)
+
 		const { stdout, stderr } = await runScript([
 			`cd ${testDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
-			`jutge-run jutge-submit ${name} < ${testDir}/task.tar > ${testDir}/correction.tgz`,
+			`${jutgeRunPath} jutge-submit ${name} < ${testDir}/task.tar > ${testDir}/correction.tgz`,
 		])
 
 		await fs.writeFile(`${testDir}/submit.stdout.txt`, stdout)
 		await fs.writeFile(`${testDir}/submit.stderr.txt`, stderr)
 
-		const match = stderr.match(rVeredict)
-		if (!match) {
-			throw new Error("No veredict found")
-		}
-		return match[1]
+		await fs.mkdir(`${testDir}/correction`)
+		await extractTarGz(
+			`${testDir}/correction.tgz`,
+			join(testDir, "correction")
+		)
+
+		const yaml = await readYml(`${testDir}/correction/correction.yml`)
+		return yaml.veredict // NOTE(pauek): ver*e*dict! We should fix that at some point 
 	} catch (e) {
+		if (e instanceof SpawnError) {
+			throw new Error(
+				`submitProblem failed: ${e.message}\nSTDOUT:${e.stdout}\nSTDERR:${e.stderr}`
+			)
+		}
 		throw new Error(`submitProblem failed: ${e}`)
 	}
 }
@@ -176,6 +184,10 @@ export const createTarGz = async (path: string, files: TarFiles) => {
 	await asyncExec(`tar -czf ${path} -C ${targetdir} ${filenames.join(" ")}`)
 }
 
+export const extractTarGz = async (path: string, destination: string) => {
+	await asyncExec(`tar -xzf ${path} -C ${destination}`)
+}
+
 export const createTar = async (
 	destination: string,
 	rootDir: string,
@@ -231,6 +243,11 @@ export const helloWorldTestForLanguage = (dir: string) => {
 	const language = basename(dir)
 	const outputDir = join(dir, ".errors")
 	const testCases = getAllTestCases(dir)
+
+	beforeAll(async () => {
+		await rimraf(outputDir)
+	})
+
 	test.each(testCases)(
 		"%s",
 		async (programFile, programPath, expectedVerdict) => {
