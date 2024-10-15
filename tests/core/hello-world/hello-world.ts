@@ -282,6 +282,8 @@ export const helloWorldTestForLanguage = (dir: string) => {
 	afterAll(async () => {
 		try {
 			await rmdir(outputDir)
+			await rm(`${dir}/driver.tgz`)
+			await rm(`${dir}/problem.tgz`)
 		} catch (e) {
 			// Ignore error if the directory is not empty
 		}
