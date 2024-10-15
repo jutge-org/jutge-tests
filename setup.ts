@@ -1,11 +1,5 @@
-import { createTarGzFromDirectory, pythonEnvCreate } from "./jutge"
-import { rmSync } from "fs"
+import { pythonEnvCreate } from "./tests/core/hello-world/hello-world"
 
-const helloRoot = "tests/core/hello-world"
-
-export default function Setup() {
-  rmSync(`.errors`, { force: true, recursive: true })
-  pythonEnvCreate(["src/toolkit", "src/server-toolkit"])
-  createTarGzFromDirectory(`${helloRoot}/driver`)
-  createTarGzFromDirectory(`${helloRoot}/problem`)
+export default () => {
+	pythonEnvCreate(["src/toolkit", "src/server-toolkit"])
 }

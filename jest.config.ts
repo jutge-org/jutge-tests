@@ -1,13 +1,15 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 export default {
-  extensionsToTreatAsEsm: [".ts"],
-  testEnvironment: "node",
-  moduleNameMapper: {
-    "@/(.*)": "<rootDir>/$1",
-  },
-  transform: {
-    "^.+.tsx?$": ["ts-jest", {}],
-  },
-  globalSetup: "./setup.ts",
-  globalTeardown: "./tear-down.ts",
+	maxConcurrency: 1, // No concurrency 😥
+	maxWorkers: 1, // No concurrency 😥
+	extensionsToTreatAsEsm: [".ts"],
+	testEnvironment: "node",
+	moduleNameMapper: {
+		"@/(.*)": "<rootDir>/$1",
+	},
+	transform: {
+		"^.+.tsx?$": ["ts-jest", {}],
+	},
+	globalSetup: "./setup.ts",
+	globalTeardown: "./teardown.ts",
 }

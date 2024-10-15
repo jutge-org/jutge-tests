@@ -18,7 +18,9 @@
     "typescript": "^5.0.0"
   },
   "prettier": {
-    "semi": false
+    "semi": false,
+	"tabWidth": 4,
+	"useTabs": true
   },
   "dependencies": {
     "@types/archiver": "^6.0.2",

@@ -176,5 +176,7 @@ dist
 
 **/venv
 **/tests/**/*.tar
-output.txt
-.errors
+**/.errors
+
+# Python env
+.venv
