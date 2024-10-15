@@ -1,7 +1,3 @@
-[submodule "src/dockerfiles"]
-	path = dockerfiles
-	url = github:jutge-org/jutge-dockerfiles
-	branch = docker-in-docker
 [submodule "tests/core/hello-world/driver"]
 	path = tests/core/hello-world/driver
 	url = github:jutge-org/jutge-driver-std
