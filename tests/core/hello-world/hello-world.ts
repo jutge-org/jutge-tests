@@ -32,12 +32,18 @@ export const asyncSpawn = (
 
 		process.stdout.on("data", (data) => (stdout += data))
 		process.stderr.on("data", (data) => (stderr += data))
-
+		process.on("error", (err) => reject(err))
 		process.on("close", (code) => {
 			if (code === 0) {
 				resolve({ stdout, stderr })
 			} else {
-				reject(code)
+				reject(
+					new Error(
+						`Executing '${cmd}' failed with code ${code}:\n` +
+							`STDOUT:\n${stdout}\n` +
+							`STDERR:\n${stderr}\n`
+					)
+				)
 			}
 		})
 	})
@@ -52,36 +58,32 @@ export const makeTaskTar = async (taskFolder: string) => {
 	await asyncExec(`rm -f driver.tgz problem.tgz submission.tgz`)
 }
 
-export const pythonEnvRun = async (cmds: string[]) => {
-	const script = ["source venv/bin/activate", ...cmds].join("; ")
+export const runScript = async (cmds: string[]) => {
+	const script = [...cmds].join("; ")
 	const { stdout, stderr } = await asyncSpawn("bash", ["-c", script])
 	return { stdout: stdout.toString(), stderr: stderr.toString() }
 }
 
-export const pythonEnvCreate = async (packages: string[]) => {
-	await asyncExec(`python3 -m venv ${PYTHON_ENV_DIR}`)
-	await pythonEnvRun(packages.map((pkg) => `pip3 install ${pkg}`))
-}
-
-export const pythonEnvDestroy = async () =>
-	fs.rm(PYTHON_ENV_DIR, { recursive: true, force: true })
-
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
 export const submitProblem = async (name: string, testDir: string) => {
-	const { stdout, stderr } = await pythonEnvRun([
-		`cd ${testDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
-		`jutge-run jutge-submit ${name} < ${testDir}/task.tar > ${testDir}/correction.tgz`,
-	])
+	try {
+		const { stdout, stderr } = await runScript([
+			`cd ${testDir}`, // Change to temporary, empty directory since 'jutge-run' will use it as the shared volue
+			`jutge-run jutge-submit ${name} < ${testDir}/task.tar > ${testDir}/correction.tgz`,
+		])
 
-	await fs.writeFile(`${testDir}/submit.stdout.txt`, stdout)
-	await fs.writeFile(`${testDir}/submit.stderr.txt`, stderr)
+		await fs.writeFile(`${testDir}/submit.stdout.txt`, stdout)
+		await fs.writeFile(`${testDir}/submit.stderr.txt`, stderr)
 
-	const match = stderr.match(rVeredict)
-	if (!match) {
-		throw new Error("No veredict found")
+		const match = stderr.match(rVeredict)
+		if (!match) {
+			throw new Error("No veredict found")
+		}
+		return match[1]
+	} catch (e) {
+		throw new Error(`submitProblem failed: ${e}`)
 	}
-	return match[1]
 }
 
 export const expectedVerdict = async (folder: string) =>
@@ -207,7 +209,11 @@ export const getAllTestCases = (langdir: string) => {
 
 	for (const ent of readdirSync(langdir, { withFileTypes: true })) {
 		// Skip files starting with "_"
-		if (ent.name.startsWith("_") || ent.name.endsWith(".test.ts") || ent.name.endsWith(".tgz")) {
+		if (
+			ent.name.startsWith("_") ||
+			ent.name.endsWith(".test.ts") ||
+			ent.name.endsWith(".tgz")
+		) {
 			continue
 		}
 		if (ent.isFile()) {

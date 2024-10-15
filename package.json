@@ -19,7 +19,9 @@
     "typescript": "^5.0.0"
   },
   "prettier": {
-    "semi": false
+    "semi": false,
+    "tabWidth": 4,
+    "useTabs": true
   },
   "dependencies": {
     "archiver": "^7.0.1",
