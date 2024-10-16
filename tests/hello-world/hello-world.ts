@@ -70,7 +70,7 @@ export const submitProblem = async (
 	try {
 		const jutgeRunPath = resolve(
 			// TODO(pauek): This is a little fragile, how to do it properly?
-			join(__dirname, "..", "..", "jutge-run-outside", "jutge-run")
+			join(__dirname, "..", "..", "jutge-exec", "jutge-run")
 		)
 
 		const { stdout, stderr } = await runScript([
