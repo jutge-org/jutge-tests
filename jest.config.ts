@@ -2,10 +2,10 @@
 export default {
 	/* NOTE(pauek): These two lines are extremely important for now!
 	      Concurrency in the tests produces errors :( */
-	maxConcurrency: 1,
-	maxWorkers: 1,
+	maxConcurrency: 16,
+	maxWorkers: 16,
 
-	testTimeout: 10000, // FIXME(pauek): Go needs more than 5000 for now...
+	testTimeout: 20000, // FIXME(pauek): Go needs more than 5000 for now...
 
 	extensionsToTreatAsEsm: [".ts"],
 	testEnvironment: "node",

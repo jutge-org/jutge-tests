@@ -254,7 +254,7 @@ export const helloWorldTestForLanguage = (dir: string) => {
 		await rimraf(outputDir)
 	})
 
-	test.each(testCases)(
+	test.concurrent.each(testCases)(
 		"%s",
 		async (programFile, programPath, expectedVerdict) => {
 			const testDir = resolve(join(outputDir, programFile))
