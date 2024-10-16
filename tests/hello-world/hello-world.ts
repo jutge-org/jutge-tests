@@ -62,10 +62,15 @@ export const runScript = async (cmds: string[]) => {
 
 export const rVeredict = /<<<< end with veredict (.*) >>>>/
 
-export const submitProblem = async (imageName: string, name: string, testDir: string) => {
+export const submitProblem = async (
+	imageName: string,
+	name: string,
+	testDir: string
+) => {
 	try {
 		const jutgeRunPath = resolve(
-			join(__dirname, "..", "..", "..", "jutge-run-outside", "jutge-run")
+			// TODO(pauek): This is a little fragile, how to do it properly?
+			join(__dirname, "..", "..", "jutge-run-outside", "jutge-run")
 		)
 
 		const { stdout, stderr } = await runScript([
@@ -83,7 +88,7 @@ export const submitProblem = async (imageName: string, name: string, testDir: st
 		)
 
 		const yaml = await readYml(`${testDir}/correction/correction.yml`)
-		return yaml.veredict // NOTE(pauek): ver*e*dict! We should fix that at some point 
+		return yaml.veredict // NOTE(pauek): ver*e*dict! We should fix that at some point
 	} catch (e) {
 		if (e instanceof SpawnError) {
 			throw new Error(
@@ -224,7 +229,7 @@ export const getAllTestCases = (langdir: string) => {
 		if (
 			ent.name.startsWith("_") ||
 			ent.name.endsWith(".test.ts") ||
-			ent.name.endsWith(".tgz") || 
+			ent.name.endsWith(".tgz") ||
 			ent.name.endsWith(".yml")
 		) {
 			continue
@@ -253,7 +258,7 @@ export const helloWorldTestForLanguage = (dir: string) => {
 		"%s",
 		async (programFile, programPath, expectedVerdict) => {
 			const testDir = resolve(join(outputDir, programFile))
-			
+
 			const { imageName } = await readYml(`${dir}/image.yml`)
 			if (!imageName) {
 				throw new Error(`No image name found in ${dir}/image.yml`)
@@ -267,7 +272,11 @@ export const helloWorldTestForLanguage = (dir: string) => {
 			// creates. In the queue, the task folder is shared, and therefore this name is crucial.
 			// Here in the tests, 'submitProblem' creates a temporary directory to launch 'jutge-run',
 			// so the name is not so important.
-			const verdict = await submitProblem(imageName, "hello_world", testDir)
+			const verdict = await submitProblem(
+				imageName,
+				"hello_world",
+				testDir
+			)
 
 			expect(verdict).toBe(expectedVerdict)
 
