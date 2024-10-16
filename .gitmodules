@@ -1,6 +1,3 @@
-[submodule "tests/core/hello-world/jutge-driver-std"]
-	path = tests/core/hello-world/jutge-driver-std
-	url = github:jutge-org/jutge-driver-std
 [submodule "jutge-exec"]
 	path = jutge-exec
 	url = github:jutge-org/jutge-exec
