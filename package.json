@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "pull": "./docker-pull.sh"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
