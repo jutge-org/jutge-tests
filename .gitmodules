@@ -1,6 +1,6 @@
 [submodule "jutge-exec"]
 	path = jutge-exec
-	url = github:jutge-org/jutge-exec
+	url = git@github.com:jutge-org/jutge-exec
 [submodule "tests/hello-world/jutge-driver-std"]
 	path = tests/hello-world/jutge-driver-std
-	url = github:jutge-org/jutge-driver-std
+	url = git@github.com:jutge-org/jutge-driver-std
