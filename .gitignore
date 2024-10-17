@@ -178,4 +178,3 @@ dist
 **/tests/**/*.tar
 output.txt
 .errors
-install-jutge-run.sh
