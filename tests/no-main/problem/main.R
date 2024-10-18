@@ -1,0 +1,6 @@
+nums = scan(file = "stdin", what = integer(), quiet=TRUE)
+options(digits=1)
+x = as.numeric(nums[1])
+y = as.numeric(nums[2])
+cat(sprintf("%.1f", custom_average(as.integer(x), as.integer(y))))
+cat("\n")
