@@ -284,7 +284,7 @@ export const forkTestForLanguage = (dir: string) => {
 			// This is reached only if the test passes, since a failed expect throws
 			// So we keep directories for failed tests ;)
 			await rm(testDir, { recursive: true, force: true })
-		}
+		}, 100000
 	)
 
 	// Try to remove the language directory, which will succeed if it is empty
