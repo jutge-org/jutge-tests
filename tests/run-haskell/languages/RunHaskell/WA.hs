@@ -1,0 +1,1 @@
+average x y = x+y
