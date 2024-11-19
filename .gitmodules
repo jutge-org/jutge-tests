@@ -4,3 +4,6 @@
 [submodule "tests/hello-world/jutge-driver-std"]
 	path = drivers/std
 	url = git@github.com:jutge-org/jutge-driver-std
+[submodule "drivers/graphic"]
+	path = drivers/graphic
+	url = git@github.com:jutge-org/jutge-driver-graphic
