@@ -7,3 +7,6 @@
 [submodule "drivers/graphic"]
 	path = drivers/graphic
 	url = https://github.com/jutge-org/jutge-driver-graphic
+[submodule "jutge-driver-circuits"]
+	path = drivers/circuits
+	url = https://github.com/jutge-org/jutge-driver-circuits/
