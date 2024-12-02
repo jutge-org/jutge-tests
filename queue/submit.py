@@ -18,7 +18,6 @@ def ensure_env_var(name):
     return value
 
 
-# http://jutge:h487kjlAQ$%@localhost:8001/v1/tasks
 QUEUE_URL = ensure_env_var("QUEUE_URL")
 JUTGE_TESTS_FOLDER = ensure_env_var("JUTGE_TESTS_FOLDER")
 print(file=sys.stderr)
