@@ -178,3 +178,5 @@ dist
 **/tests/**/*.tar
 output.txt
 .errors
+
+submission.tar
