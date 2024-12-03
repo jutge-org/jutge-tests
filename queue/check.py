@@ -3,14 +3,12 @@
 import subprocess
 import sys
 import os
-import json
-import glob
 import yaml
 from colorama import Fore, Style
 
 
-def ensure_env_var(name):
-    if name not in os.environ:
+def ensure_env_var(name, default=None):
+    if name not in os.environ and default is None:
         print(f"Environment variable {name} not set")
         sys.exit(1)
     value = os.environ[name]
@@ -18,8 +16,9 @@ def ensure_env_var(name):
     return value
 
 
-JUTGE_TESTS_FOLDER = ensure_env_var("JUTGE_TESTS_FOLDER")
+JUTGE_TESTS_FOLDER = ensure_env_var("JUTGE_TESTS_FOLDER", "../tests")
 print()
+
 
 def exec(cmd):
     return subprocess.check_output(cmd, shell=True)
@@ -37,6 +36,7 @@ def check(title: str, task_id: str):
     print(sign, result["veredict"], title, task_id)
     sys.stdout.flush()
 
+
 for line in sys.stdin:
-    [title, task_id] = line.strip().split(' ')
-    check(title, task_id) 
+    [title, task_id] = line.strip().split(" ")
+    check(title, task_id)
