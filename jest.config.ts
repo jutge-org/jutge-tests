@@ -12,7 +12,5 @@ export default {
 	},
 	transform: {
 		"^.+.tsx?$": ["ts-jest", {}],
-	},
-	globalSetup: "./setup.ts",
-	globalTeardown: "./teardown.ts",
+	}
 }
