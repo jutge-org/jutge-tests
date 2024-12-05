@@ -8,10 +8,9 @@ import {
 } from "./utils"
 
 describe("Lots of tasks - one worker", async () => {
-	const numTasks = 5
-
-	let sentTasks: Task[] = []
 	let submissionBytes: Uint8Array = new Uint8Array()
+	const sentTasks: Task[] = []
+	const file = new File([submissionBytes], "submission.tar")
 
 	beforeAll(async () => {
 		await ensureQueueIsUp()
@@ -24,20 +23,25 @@ describe("Lots of tasks - one worker", async () => {
 	end the task takes around 6 seconds to complete.
 	*/
 
-	const moreTime = 6000
+	const _sendTask = async () => {
+		const taskName = `test-${Date.now()}`
+		const response = await queueSendTask(taskName, file)
+		expect(response.ok).toBe(true)
+		const task = await response.json()
+		expect(task.id).toBeDefined()
+		expect(task.name).toBe(taskName)
+		sentTasks.push(task)
+	}
+
+	const moreTime = 5000
 	it(
 		"accepts all tasks",
 		async () => {
-			const file = new File([submissionBytes], "submission.tar")
-			for (let i = 0; i < numTasks; i++) {
-				const taskName = `test-${Date.now()}`
-				const response = await queueSendTask(taskName, file)
-				expect(response.ok).toBe(true)
-				const task = await response.json()
-				expect(task.id).toBeDefined()
-				expect(task.name).toBe(taskName)
-				sentTasks.push(task)
-			}
+			await _sendTask()
+			await _sendTask()
+			await _sendTask()
+			await _sendTask()
+			await _sendTask()
 		},
 		moreTime
 	)
@@ -60,7 +64,7 @@ describe("Lots of tasks - one worker", async () => {
 		}
 	})
 
-	const checkTask = async (index: number) => {
+	const _checkTask = async (index: number) => {
 		const task = sentTasks[index]
 		while (true) {
 			const [processed] = queueGetTasksById([task.id])
@@ -72,9 +76,9 @@ describe("Lots of tasks - one worker", async () => {
 	}
 
 	const taskTime = 8000
-	it(`has processed task 1`, async () => checkTask(0), taskTime)
-	it(`has processed task 2`, async () => checkTask(1), taskTime)
-	it(`has processed task 3`, async () => checkTask(2), taskTime)
-	it(`has processed task 4`, async () => checkTask(3), taskTime)
-	it(`has processed task 5`, async () => checkTask(4), taskTime)
+	it(`has processed task 1`, async () => _checkTask(0), taskTime)
+	it(`has processed task 2`, async () => _checkTask(1), taskTime)
+	it(`has processed task 3`, async () => _checkTask(2), taskTime)
+	it(`has processed task 4`, async () => _checkTask(3), taskTime)
+	it(`has processed task 5`, async () => _checkTask(4), taskTime)
 })
