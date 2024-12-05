@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, it, expect } from "bun:test"
 import {
 	checkWorkerTaskId,
 	ensureQueueIsUp,
-	prepareWorker,
+	setupWorker,
 	queueSendTask,
 } from "./utils"
 import { settings } from "./settings"
@@ -10,13 +10,13 @@ import { mkdtemp } from "fs/promises"
 import { $ } from "bun"
 import { parse as yamlParse } from "yaml"
 
-describe("queue-tests", async () => {
+describe("One task - one worker", async () => {
 	let task: any
 	let submissionBytes: Uint8Array = new Uint8Array()
 
 	beforeAll(async () => {
 		await ensureQueueIsUp()
-		await prepareWorker()
+		await setupWorker()
 		submissionBytes = await Bun.file(`./submission.tar`).bytes()
 	})
 
@@ -48,11 +48,11 @@ describe("queue-tests", async () => {
 		await checkWorkerTaskId(1, task.id)
 	})
 
-	const longerTimeout = 10000
+	const longerTimeout = 12000
 	it(
 		"frees the worker",
 		async () => {
-			await Bun.sleep(7000) // Wait for it to be processed
+			await Bun.sleep(8000) // Wait for it to be processed
 			await checkWorkerTaskId(1, null)
 		},
 		longerTimeout

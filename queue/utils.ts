@@ -4,6 +4,12 @@ import { expect } from "bun:test"
 import chalk from "chalk"
 import { settings } from "./settings"
 
+export interface Task {
+	id: string
+	name: string
+	state: string
+}
+
 const queuedb = new Database(settings.database.file, {
 	readwrite: true,
 	strict: true,
@@ -20,8 +26,8 @@ export const ensureQueueIsUp = async () => {
 	}
 }
 
-export const prepareWorker = async () => {
-	console.log(chalk.dim(`Preparing workers...`))
+export const setupWorker = async () => {
+	console.log(chalk.dim(`Setting up the worker...`))
 
 	// Delete all workers
 	queuedb.run(`DELETE FROM workers`)
@@ -59,10 +65,18 @@ export const queueSendTask = async (name: string, file: File) => {
 	const basicAuth = Buffer.from(
 		`${settings.queue.username}:${settings.queue.password}`
 	).toString("base64")
-	
+
 	return await fetch(`${settings.queue.baseUrl}/tasks`, {
 		method: "PUT",
 		headers: { Authorization: `Basic ${basicAuth}` },
 		body: formData,
 	})
+}
+
+export const queueGetTasksById = (ids: string[]): Task[] => {
+	try {
+		return ids.map(id => queuedb.query(`select * from tasks where id = ?`).get(id) as Task)
+	} catch (e) {
+		return []
+	}
 }
