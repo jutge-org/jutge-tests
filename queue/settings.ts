@@ -28,6 +28,16 @@ export const TSettings = t.Object({
 			default: `http://localhost:8000/v1`,
 			description: "The base URL for the testing queue",
 		}),
+		taskDir: t.String({
+			default: '/home/jutge/dat/tasks',
+			description: "The folder where the task files are kept",
+		}),
+		worker: t.Object({
+			uri: t.String({
+				default: `localhost`,
+				description: `URI to use for a worker`
+			})
+		}),
 		username: t.String({
 			default: "admin",
 			description: "Auth user",

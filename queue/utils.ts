@@ -4,6 +4,12 @@ import { expect } from "bun:test"
 import chalk from "chalk"
 import { settings } from "./settings"
 
+const queuedb = new Database(settings.database.file, {
+	readwrite: true,
+	strict: true,
+	create: false,
+})
+
 export const ensureQueueIsUp = async () => {
 	const { ok } = await fetch(`${settings.queue.baseUrl}/misc/ping`)
 	if (!ok) {
@@ -14,14 +20,8 @@ export const ensureQueueIsUp = async () => {
 	}
 }
 
-export const prepareWorkers = async () => {
+export const prepareWorker = async () => {
 	console.log(chalk.dim(`Preparing workers...`))
-	const queuedb = new Database(settings.database.file, {
-		readwrite: true,
-		strict: true,
-		create: false,
-	})
-	// queuedb.run("PRAGMA journal_mode = WAL;")
 
 	// Delete all workers
 	queuedb.run(`DELETE FROM workers`)
@@ -30,30 +30,39 @@ export const prepareWorkers = async () => {
 
 	// Add one worker which is just localhost
 	queuedb.run(
-		`INSERT INTO workers VALUES (1, 'jutge', 'localhost', 1, null)`
+		`INSERT INTO workers VALUES (1, 'jutge', '${settings.queue.worker.uri}', 1, null)`
 	)
 	const testWorkers = queuedb.query(`select * from workers`).all()
 	expect(testWorkers).toEqual([
 		{
 			id: 1,
 			name: "jutge",
-			ssh_uri: "localhost",
+			ssh_uri: settings.queue.worker.uri,
 			enabled: 1,
 			task_id: null,
 		},
 	])
 }
 
-export const sendTask = async (file: File) => {
+export const checkWorkerTaskId = async (id: number, taskId: string | null) => {
+	const [worker]: any[] = queuedb
+		.query(`SELECT * FROM workers WHERE id = ?`)
+		.all(id)
+	expect(worker.task_id).toBe(taskId)
+}
+
+export const queueSendTask = async (name: string, file: File) => {
 	const formData = new FormData()
-	formData.append("name", "test-task")
+	formData.append("name", name)
 	formData.append("file", file)
-	const basicAuth = Buffer.from(`${settings.queue.username}:${settings.queue.password}`).toString('base64')
+
+	const basicAuth = Buffer.from(
+		`${settings.queue.username}:${settings.queue.password}`
+	).toString("base64")
+	
 	return await fetch(`${settings.queue.baseUrl}/tasks`, {
 		method: "PUT",
-		headers: {
-			"Authorization": `Basic ${basicAuth}`
-		},
+		headers: { Authorization: `Basic ${basicAuth}` },
 		body: formData,
 	})
 }
