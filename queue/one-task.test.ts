@@ -1,16 +1,15 @@
-import { afterAll, beforeAll, describe, it, expect } from "bun:test"
-import {
-	getWorkerTaskIdTimeout,
-	ensureQueueIsUp,
-	setupWorker,
-	queueSendTask,
-	getWorkerTaskIdChangeTimeout,
-	waitUntilFileAppears,
-} from "./utils"
-import { settings } from "./settings"
-import { mkdtemp } from "fs/promises"
 import { $ } from "bun"
+import { beforeAll, describe, expect, it } from "bun:test"
+import { mkdtemp } from "fs/promises"
 import { parse as yamlParse } from "yaml"
+import { settings } from "./settings"
+import {
+	ensureQueueIsUp,
+	getWorkerTaskIdChangeTimeout,
+	queueSendTask,
+	setupWorker,
+	waitUntilFileAppears
+} from "./utils"
 
 describe("One task - one worker", async () => {
 	let task: any
