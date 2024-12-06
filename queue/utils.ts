@@ -1,7 +1,6 @@
 import boxen from "boxen"
 import { Database } from "bun:sqlite"
 import { expect } from "bun:test"
-import chalk from "chalk"
 import { settings } from "./settings"
 
 export interface Task {
@@ -10,24 +9,18 @@ export interface Task {
 	state: string
 }
 
+const errorBox = (msg: string) => {
+	console.error(boxen(msg, { padding: 1 }))
+}
+
 const openQueueDatabase = () => {
 	try {
-		const db = new Database(settings.database.file, {
-			readwrite: true,
-			strict: true,
-			create: false,
-		})
-		return db
+		const options = { readwrite: true, strict: true, create: false }
+		return new Database(settings.database.file, options)
 	} catch (e: any) {
-		console.error(
-			boxen(
-				`Can't open database ${
-					settings.database.file
-				}.\n${e.toString()}`,
-				{
-					padding: 1,
-				}
-			)
+		errorBox(
+			`Can't open database ${settings.database.file}.\n` +
+				`${e.toString()}`
 		)
 		process.exit(1)
 	}
@@ -45,7 +38,11 @@ export const ensureQueueIsUp = async () => {
 	}
 }
 
-export const setupWorker = async () => {
+export const flushQueue = async () => {
+	await queueCallEndpoint("GET", "/admin/flush")
+}
+
+export const setupWorker = async (name: string = "jutge") => {
 	// Delete all workers
 	queuedb.run(`DELETE FROM workers`)
 	const empty = queuedb.query(`select * from workers`).all()
@@ -53,35 +50,32 @@ export const setupWorker = async () => {
 
 	// Add one worker which is just localhost
 	queuedb.run(
-		`INSERT INTO workers VALUES (1, 'jutge', '${settings.queue.worker.uri}', 1, null)`
+		`INSERT INTO workers VALUES (1, '${name}', '${settings.queue.worker.uri}', 1, null)`
 	)
 	const testWorkers = queuedb.query(`select * from workers`).all()
+	const ssh_uri = settings.queue.worker.uri
 	expect(testWorkers).toEqual([
-		{
-			id: 1,
-			name: "jutge",
-			ssh_uri: settings.queue.worker.uri,
-			enabled: 1,
-			task_id: null,
-		},
+		{ id: 1, name, ssh_uri, enabled: 1, task_id: null },
 	])
+}
+
+export const basicAuth = () => {
+	const { username, password } = settings.queue
+	const userpass64 = Buffer.from(`${username}:${password}`).toString("base64")
+	return { Authorization: `Basic ${userpass64}` }
 }
 
 export const queueCallEndpoint = async (method: string, path: string) => {
 	const response = await fetch(`${settings.queue.baseUrl}${path}`, {
 		method,
-		headers: {
-			Authorization: `Basic ${Buffer.from(
-				`${settings.queue.username}:${settings.queue.password}`
-			).toString("base64")}`,
-		},
+		headers: { ...basicAuth() },
 	})
 	return await response.json()
 }
 
 export const getWorkerTaskIdChangeTimeout = async (
 	workerName: string,
-	timeout: number = 10000
+	timeout: number = 30000
 ) => {
 	// Wait until the worker has a task_id
 	const start = performance.now()
@@ -103,7 +97,10 @@ export const getWorkerTaskIdChangeTimeout = async (
 	}
 }
 
-export const waitUntilFileAppears = async (path: string, timeout: number = 1000) => {
+export const waitUntilFileAppears = async (
+	path: string,
+	timeout: number = 1000
+) => {
 	const start = performance.now()
 	while (true) {
 		if (await Bun.file(path).exists()) {

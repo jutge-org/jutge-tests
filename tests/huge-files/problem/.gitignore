@@ -1,0 +1,3 @@
+# Ignore these file since they are huge and can be generated locally (see ../generate.ts)
+*.inp
+*.cor

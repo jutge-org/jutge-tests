@@ -16,6 +16,10 @@ export const TSettings = t.Object({
 			default: "/home/jutge/dat",
 			description: "Data directory",
 		}),
+		tests: t.String({
+			default: "/home/jutge/git/jutge-tests",
+			description: "Directory with a clone of 'jutge-tests'",
+		})
 	}),
 	database: t.Object({
 		file: t.String({

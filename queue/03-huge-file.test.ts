@@ -1,5 +1,5 @@
 import { $ } from "bun"
-import { beforeAll, describe, expect, it } from "bun:test"
+import { afterAll, beforeAll, describe, expect, it } from "bun:test"
 import { mkdtemp } from "fs/promises"
 import { parse as yamlParse } from "yaml"
 import { settings } from "./settings"
@@ -11,14 +11,28 @@ import {
 	waitUntilFileAppears
 } from "./utils"
 
-describe("One task - one worker", async () => {
-	let task: any
-	let submissionBytes: Uint8Array = new Uint8Array()
+import { createSubmissionTar } from '../lib/submission'
+import chalk from "chalk"
 
+describe("Huge task", async () => {
+	let task: any
+	let tmpDir : string
+	let submissionFilename: string
+	let submissionBytes: Uint8Array = new Uint8Array()
+	
 	beforeAll(async () => {
+		tmpDir = await mkdtemp(`/tmp/queue-tests-one-task-`)
+		submissionFilename = `${tmpDir}/submission.tar`
+		console.log(chalk.dim(`Creating big submission file...`))
+		await createSubmissionTar(settings.dirs.tests, 'huge-files', 'G++', 'std', submissionFilename)
+		console.log(chalk.dim(`Submission file created`))
+		submissionBytes = await Bun.file(submissionFilename).bytes()
 		await ensureQueueIsUp()
 		await setupWorker()
-		submissionBytes = await Bun.file(`./submission.tar`).bytes()
+	})
+
+	afterAll(async () => {
+		await $`rm -rf ${tmpDir}`
 	})
 
 	/*
@@ -52,14 +66,13 @@ describe("One task - one worker", async () => {
 		expect(taskId).toBe(task.id)
 	})
 
-	const longerTimeout = 12000
 	it(
 		"frees the worker",
 		async () => {
 			const taskId = await getWorkerTaskIdChangeTimeout("jutge")
 			expect(taskId).toBe(null)
 		},
-		longerTimeout
+		{ timeout: 20000 }
 	)
 
 	it("produces correct output", async () => {
