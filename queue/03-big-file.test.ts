@@ -14,7 +14,7 @@ import {
 import { createSubmissionTar } from '../lib/submission'
 import chalk from "chalk"
 
-describe("Huge task", async () => {
+describe("Big file task", async () => {
 	let task: any
 	let tmpDir : string
 	let submissionFilename: string
@@ -40,7 +40,7 @@ describe("Huge task", async () => {
 	end the task takes around 6 seconds to complete.
 	*/
 
-	it("accepts a task", async () => {
+	it("accepts the task", async () => {
 		const taskName = `test-${Date.now()}`
 		const response = await queueSendTask({
 			name: taskName,

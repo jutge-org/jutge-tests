@@ -12,7 +12,6 @@ import {
 } from "./utils"
 
 describe("Many tasks - one worker", async () => {
-	let task: Task
 	let tmpDir: string
 	let submissionFilename: string
 	let submissionBytes: Uint8Array = new Uint8Array()
@@ -23,8 +22,8 @@ describe("Many tasks - one worker", async () => {
 		submissionFilename = `${tmpDir}/submission.tar`
 		await createSubmissionTar(
 			settings.dirs.tests,
-			"huge-files",
-			"G++",
+			"hello-world",
+			"P1++",
 			"std",
 			submissionFilename
 		)
@@ -42,7 +41,7 @@ describe("Many tasks - one worker", async () => {
 	end the task takes around 6 seconds to complete.
 	*/
 
-	it("accepts task with big file", async (i) => {
+	test.each([1, 2, 3, 4, 5])("accepts task %i", async (i) => {
 		const taskName = `test-${Date.now()}`
 		const response = await queueSendTask({
 			name: taskName,
@@ -50,14 +49,32 @@ describe("Many tasks - one worker", async () => {
 			imageId: "cpp",
 		})
 		expect(response.ok).toBe(true)
-		task = await response.json()
+		const task = await response.json()
 		expect(task.id).toBeDefined()
 		expect(task.name).toBe(taskName)
 		sentTasks.push(task)
 	})
 
+	it("registered all tasks", async () => {
+		const pendingTasks = queueGetTasksById(sentTasks.map((t) => t.id))
+		// The returned objects match
+		expect(pendingTasks).toContainValues([
+			expect.objectContaining({
+				id: expect.any(String),
+				name: expect.stringContaining("test-"),
+			}),
+		])
+		for (const ptask of pendingTasks) {
+			const sentTaskOrNot = sentTasks.find((t) => t.id === ptask.id)
+			expect(sentTaskOrNot).toBeDefined()
+			const sentTask: Task = sentTaskOrNot!
+			expect(sentTask.id).toBe(ptask.id)
+			expect(sentTask.name).toBe(ptask.name)
+		}
+	})
 
-	it('has processed task with big file', async () => {
+	test.each([1, 2, 3, 4, 5])('has processed task %i', async (index: number) => {
+		const task = sentTasks[index-1]
 		while (true) {
 			const [processed] = queueGetTasksById([task.id])
 			if (processed && processed.state === "completed") {
