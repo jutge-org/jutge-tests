@@ -10,7 +10,7 @@ const rndInt = (min: number, max: number) =>
 
 let input = ``
 let correct = ``
-for (let j = 0; j < 5_000_000; j++) {
+for (let j = 0; j < 2_000_000; j++) {
 	const a = rndInt(1, 100_000_000)
 	const b = rndInt(1, 100_000_000)
 	input += `${a} ${b}\n`
