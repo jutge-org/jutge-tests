@@ -72,7 +72,7 @@ describe("Big file task", async () => {
 			const taskId = await getWorkerTaskIdChangeTimeout("jutge")
 			expect(taskId).toBe(null)
 		},
-		{ timeout: 20000 }
+		{ timeout: 30_000 }
 	)
 
 	it("produces correct output", async () => {

@@ -44,6 +44,11 @@ describe("One task - one worker", async () => {
 			file: new File([submissionBytes], "submission.tar"),
 			imageId: "cpp",
 		})
+        if (!response.ok) {
+            console.error(response.status, response.statusText)
+            const { stack } = await response.json()
+            console.error(stack)
+        }
 		expect(response.ok).toBe(true)
 		task = await response.json()
 		expect(task.id).toBeDefined()
