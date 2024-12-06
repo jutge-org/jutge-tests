@@ -10,7 +10,6 @@ import {
 describe("Lots of tasks - one worker", async () => {
 	let submissionBytes: Uint8Array = new Uint8Array()
 	const sentTasks: Task[] = []
-	const file = new File([submissionBytes], "submission.tar")
 
 	beforeAll(async () => {
 		await ensureQueueIsUp()
@@ -25,7 +24,11 @@ describe("Lots of tasks - one worker", async () => {
 
 	const _sendTask = async () => {
 		const taskName = `test-${Date.now()}`
-		const response = await queueSendTask(taskName, file)
+		const response = await queueSendTask({
+			name: taskName,
+			file: new File([submissionBytes], "submission.tar"),
+			imageId: "cpp",
+		})
 		expect(response.ok).toBe(true)
 		const task = await response.json()
 		expect(task.id).toBeDefined()

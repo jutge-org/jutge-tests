@@ -10,11 +10,30 @@ export interface Task {
 	state: string
 }
 
-const queuedb = new Database(settings.database.file, {
-	readwrite: true,
-	strict: true,
-	create: false,
-})
+const openQueueDatabase = () => {
+	try {
+		const db = new Database(settings.database.file, {
+			readwrite: true,
+			strict: true,
+			create: false,
+		})
+		return db
+	} catch (e: any) {
+		console.error(
+			boxen(
+				`Can't open database ${
+					settings.database.file
+				}.\n${e.toString()}`,
+				{
+					padding: 1,
+				}
+			)
+		)
+		process.exit(1)
+	}
+}
+
+const queuedb = openQueueDatabase()
 
 export const ensureQueueIsUp = async () => {
 	const { ok } = await fetch(`${settings.queue.baseUrl}/misc/ping`)
@@ -27,8 +46,6 @@ export const ensureQueueIsUp = async () => {
 }
 
 export const setupWorker = async () => {
-	console.log(chalk.dim(`Setting up the worker...`))
-
 	// Delete all workers
 	queuedb.run(`DELETE FROM workers`)
 	const empty = queuedb.query(`select * from workers`).all()
@@ -50,17 +67,65 @@ export const setupWorker = async () => {
 	])
 }
 
-export const checkWorkerTaskId = async (id: number, taskId: string | null) => {
-	const [worker]: any[] = queuedb
-		.query(`SELECT * FROM workers WHERE id = ?`)
-		.all(id)
-	expect(worker.task_id).toBe(taskId)
+export const queueCallEndpoint = async (method: string, path: string) => {
+	const response = await fetch(`${settings.queue.baseUrl}${path}`, {
+		method,
+		headers: {
+			Authorization: `Basic ${Buffer.from(
+				`${settings.queue.username}:${settings.queue.password}`
+			).toString("base64")}`,
+		},
+	})
+	return await response.json()
 }
 
-export const queueSendTask = async (name: string, file: File) => {
+export const getWorkerTaskIdChangeTimeout = async (
+	workerName: string,
+	timeout: number = 10000
+) => {
+	// Wait until the worker has a task_id
+	const start = performance.now()
+	const { task_id: initialTaskId } = await queueCallEndpoint(
+		"GET",
+		`/workers/${workerName}`
+	)
+	while (true) {
+		const { task_id } = await queueCallEndpoint(
+			"GET",
+			`/workers/${workerName}`
+		)
+		if (task_id !== initialTaskId) {
+			return task_id
+		} else if (performance.now() - start > timeout) {
+			return task_id
+		}
+		await Bun.sleep(400)
+	}
+}
+
+export const waitUntilFileAppears = async (path: string, timeout: number = 1000) => {
+	const start = performance.now()
+	while (true) {
+		if (await Bun.file(path).exists()) {
+			return
+		}
+		await Bun.sleep(400)
+		if (performance.now() - start > timeout) {
+			throw new Error(`File ${path} did not appear in ${timeout}ms`)
+		}
+	}
+}
+
+interface QueueSendTask {
+	name: string
+	file: File
+	imageId: string
+}
+export const queueSendTask = async ({ name, file, imageId }: QueueSendTask) => {
 	const formData = new FormData()
 	formData.append("name", name)
 	formData.append("file", file)
+	formData.append("image_id", imageId)
 
 	const basicAuth = Buffer.from(
 		`${settings.queue.username}:${settings.queue.password}`
@@ -75,7 +140,12 @@ export const queueSendTask = async (name: string, file: File) => {
 
 export const queueGetTasksById = (ids: string[]): Task[] => {
 	try {
-		return ids.map(id => queuedb.query(`select * from tasks where id = ?`).get(id) as Task)
+		return ids.map(
+			(id) =>
+				queuedb
+					.query(`select * from tasks where id = ?`)
+					.get(id) as Task
+		)
 	} catch (e) {
 		return []
 	}
