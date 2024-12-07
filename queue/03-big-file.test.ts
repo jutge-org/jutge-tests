@@ -5,7 +5,7 @@ import { parse as yamlParse } from "yaml"
 import { settings } from "./settings"
 import {
 	ensureQueueIsUp,
-	getWorkerTaskIdChangeTimeout,
+	getWorkerTaskIdTimeout,
 	queueSendTask,
 	setupWorker,
 	waitUntilFileAppears
@@ -62,15 +62,16 @@ describe("Big file task", async () => {
 
 	it("assigns a worker", async () => {
 		// Check that the worker is occupied with this task
-		const taskId = await getWorkerTaskIdChangeTimeout("jutge")
-		expect(taskId).toBe(task.id)
+		const result = await getWorkerTaskIdTimeout("jutge", task.id)
+		expect(result).toBe(true)
 	})
 
 	it(
 		"frees the worker",
 		async () => {
-			const taskId = await getWorkerTaskIdChangeTimeout("jutge")
-			expect(taskId).toBe(null)
+            const timeToFinshTask = 30_000
+			const result = await getWorkerTaskIdTimeout("jutge", null, timeToFinshTask)
+			expect(result).toBe(true)
 		},
 		{ timeout: 30_000 }
 	)
