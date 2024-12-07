@@ -73,11 +73,10 @@ describe("One task - one worker", async () => {
     it(
         "frees the worker",
         async () => {
-            const timeToFinshTask = 6000
             const result = await getWorkerTaskIdTimeout(
                 "jutge",
                 null,
-                timeToFinshTask
+                taskProcessingTimeout
             )
             expect(result).toBe(true)
         },

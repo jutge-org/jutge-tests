@@ -43,13 +43,11 @@ describe("Many tasks - one worker", async () => {
 
 	test.each([1, 2, 3, 4, 5])("accepts task %i", async (i) => {
 		const taskName = `test-${Date.now()}`
-		const response = await queueSendTask({
+		const task = await queueSendTask({
 			name: taskName,
 			file: new File([submissionBytes], "submission.tar"),
 			imageId: "cpp",
 		})
-		expect(response.ok).toBe(true)
-		const task = await response.json()
 		expect(task.id).toBeDefined()
 		expect(task.name).toBe(taskName)
 		sentTasks.push(task)

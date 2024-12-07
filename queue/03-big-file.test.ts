@@ -42,13 +42,11 @@ describe("Big file task", async () => {
 
 	it("accepts the task", async () => {
 		const taskName = `test-${Date.now()}`
-		const response = await queueSendTask({
+		task = await queueSendTask({
 			name: taskName,
 			file: new File([submissionBytes], "submission.tar"),
 			imageId: "cpp",
 		})
-		expect(response.ok).toBe(true)
-		task = await response.json()
 		expect(task.id).toBeDefined()
 		expect(task.name).toBe(taskName)
 	})
