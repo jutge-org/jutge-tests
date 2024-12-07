@@ -73,6 +73,9 @@ export const queueCallEndpoint = async (method: string, path: string) => {
         method,
         headers: { ...basicAuth() },
     })
+    if (!response.ok) {
+        throw new Error(`HTTP call ${method} ${path} returned error: ${response.status} ${response.statusText}`)
+    }
     return await response.json()
 }
 
@@ -110,6 +113,19 @@ export const waitUntilFileAppears = async (
         if (performance.now() - start > timeout) {
             throw new Error(`File ${path} did not appear in ${timeout}ms`)
         }
+    }
+}
+
+export const waitUntilTaskCompleted = async (taskId: string, timeout: number = 30_000) => {
+    const start = performance.now()
+    while (true) {
+        const task = await queueCallEndpoint('GET', `/tasks/${taskId}`)
+        if (task.state === "completed") {
+            break
+        } else if (performance.now() - start > timeout) {
+            throw new Error(`Task ${taskId} did not complete in ${timeout}ms`)
+        }
+        await Bun.sleep(500)
     }
 }
 
@@ -170,4 +186,9 @@ export const getVeredictFromTgzFile = async (tgzPath: string) => {
     const correction = await Bun.file(`${tmpDir}/correction.yml`).text()
     const { veredict } = yamlParse(correction)
     return veredict
+}
+
+export const yamlParseFile = async (path: string): Promise<any> => {
+    const content = await Bun.file(path).text()
+    return yamlParse(content)
 }

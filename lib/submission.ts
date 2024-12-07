@@ -5,12 +5,11 @@ import { mkdir, mkdtemp, writeFile } from "fs/promises"
 import { extname, join, resolve } from "path"
 import { withTmpDir } from "./utils"
 
-const _findProgram = async (jutgeTestsDir: string, problem: string, language: string) => {
+const findACProgram = async (jutgeTestsDir: string, problem: string, language: string) => {
 	const glob = new Glob(`AC.*`)
-	for await (const path of glob.scan({
-		cwd: resolve(`${jutgeTestsDir}/tests/${problem}/languages/${language}`),
-	})) {
-		return path
+	const cwd = resolve(`${jutgeTestsDir}/tests/${problem}/languages/${language}`)
+	for await (const path of glob.scan({ cwd })) {
+		return join(cwd, path)
 	}
 	return null
 }
@@ -22,11 +21,22 @@ export const createSubmissionTar = async (
 	driver: string,
 	submissionTarFile: string
 ) => {
-	const program = await _findProgram(jutgeTestsDir, problem, language)
+	const program = await findACProgram(jutgeTestsDir, problem, language)
 	if (!program) {
 		console.error(`No program found for ${problem} in ${language}`)
 		process.exit(1)
 	}
+	return createSubmissionTarFromPath(program, jutgeTestsDir, problem, language, driver, submissionTarFile)
+}
+
+export const createSubmissionTarFromPath = async (
+	program: string,
+	jutgeTestsDir: string,
+	problem: string,
+	language: string,
+	driver: string,
+	submissionTarFile: string
+) => {
 	const extension = extname(program)
 
 	// Create temporary folder
@@ -40,9 +50,7 @@ export const createSubmissionTar = async (
 
 		// submission.tgz
 		await createTarGz(submissionTgz, {
-			[`program${extension}`]: await Bun.file(
-				`${jutgeTestsDir}/tests/${problem}/languages/${language}/AC${extension}`
-			).text(),
+			[`program${extension}`]: await Bun.file(program).text(),
 			[`submission.yml`]: `compiler_id: ${language}\n`,
 		})
 
