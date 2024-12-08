@@ -28,7 +28,7 @@ export const TSettings = t.Object({
 		}),
 	}),
 	queue: t.Object({
-		baseUrl: t.String({
+		baseurl: t.String({
 			default: `http://localhost:8000/v1`,
 			description: "The base URL for the testing queue",
 		}),

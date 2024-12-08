@@ -32,7 +32,7 @@ const openQueueDatabase = () => {
 const queuedb = openQueueDatabase()
 
 export const ensureQueueIsUp = async () => {
-    const { ok } = await fetch(`${settings.queue.baseUrl}/misc/ping`)
+    const { ok } = await fetch(`${settings.queue.baseurl}/misc/ping`)
     if (!ok) {
         console.error(
             boxen(`The test queue is not responding.`, { padding: 1 })
@@ -69,7 +69,7 @@ export const basicAuth = () => {
 }
 
 export const queueCallEndpoint = async (method: string, path: string) => {
-    const response = await fetch(`${settings.queue.baseUrl}${path}`, {
+    const response = await fetch(`${settings.queue.baseurl}${path}`, {
         method,
         headers: { ...basicAuth() },
     })
@@ -144,7 +144,7 @@ export const queueSendTask = async (taskInfo: QueueSendTask) => {
         formData.append("callback", taskInfo.callback)
     }
 
-    const response = await fetch(`${settings.queue.baseUrl}/tasks`, {
+    const response = await fetch(`${settings.queue.baseurl}/tasks`, {
         method: "PUT",
         headers: { ...basicAuth() },
         body: formData,
