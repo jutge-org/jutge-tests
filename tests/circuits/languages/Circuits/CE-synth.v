@@ -2,5 +2,5 @@ module bus_invert (
   input [7:0] in,
   output [7:0] out
 );
-  assign bad_synth = ~ in;
+  assign out = ~ in
 endmodule
