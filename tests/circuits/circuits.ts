@@ -274,7 +274,7 @@ export const runCircuitsTestForLanguage = (dir: string) => {
 			// so the name is not so important.
 			const verdict = await submitProblem(
 				imageName,
-				"testCircuits",
+				"test_circuits",
 				testDir
 			)
 
