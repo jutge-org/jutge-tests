@@ -4,7 +4,7 @@ module bus_invert (
 );
 	integer i;
 	initial begin
-		for (i = 0; i < 99999999999999; i = i + 1) begin
+		for (i = 0; i < 999999999999999999; i = i + 1) begin
 			$display ("Infinite loop #%0d ", i);
             out = ~ in;
 		end
